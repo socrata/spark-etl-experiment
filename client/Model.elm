@@ -104,10 +104,21 @@ mappingToSql tableName mapping =
   let
     columnSources =
       mapping
-        |> List.map (\(name, source) -> columnSourceToSql source ++ " as " ++ "`" ++ name ++ "`")
+        |> List.map (\(name, source) -> columnSourceToSql source ++ " as `" ++ name ++ "`")
         |> String.join ", "
   in
     "SELECT " ++ columnSources ++ " FROM " ++ tableName
+
+
+mappingToInvalidCounterSql : TableName -> SchemaMapping -> SQL
+mappingToInvalidCounterSql tableName mapping =
+  let
+    columnSources =
+      mapping
+        |> List.map (\(name, source) -> "sum(if(" ++ columnSourceToSql source ++ " is null,1,0)) as `" ++ name ++ "`")
+        |> String.join ", "
+  in
+    "SELECT count(*), " ++ columnSources ++ " FROM " ++ tableName
 
 
 columnSourceToSql : ColumnSource -> String
@@ -172,11 +183,14 @@ allStringMapping names =
     |> List.map (\name -> Debug.log "allStringMapping" (name, SourceColumn name))
 
 
-sqlOrErrors : TableName -> List ColumnName -> SchemaMapping -> Result (List Error) SQL
+sqlOrErrors : TableName -> List ColumnName -> SchemaMapping -> Result (List Error) { results : SQL, invalidCounters : SQL }
 sqlOrErrors tableName sourceColumns mapping =
   case findErrors sourceColumns mapping of
     [] ->
-      Ok <| mappingToSql tableName mapping
+      Ok
+        { results = mappingToSql tableName mapping
+        , invalidCounters = mappingToInvalidCounterSql tableName mapping
+        }
 
     errs ->
       Err errs
