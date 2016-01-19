@@ -36,6 +36,8 @@ curl --data-binary @target/scala-2.10/csv-query-assembly-1.0.jar localhost:8090/
 
 Our JobServer is now ready to go, since it has our application and a context to run it in.
 
+*NB*: If you update the application jar and upload it, you'll have to restart the spark jobserver or create a new context (step 1.5) and update the Elm code (`Server.elm`, the `context` query param) to reference it. This is because jars seem to stick to contexts — after a context has used a jar once, it never pulls in updates (or something like that).
+
 ### 4. Start Elm Frontend
 
 1. `elm reactor`
