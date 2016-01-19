@@ -4,6 +4,8 @@ An experiment in using Spark as a backend for an interactive ETL system.
 
 At the moment it isn't very useful: shows a column mapping (hardcoded to Chicago Crimes!). You can change data types, and cells will come back as "null" if it couldn't parse them.
 
+It consists of an Elm frontend for editing these "column mappings". When you update the mapping, it generates SQL that it sends back to Spark (via a `spark-jobserver` job), and displays the results.
+
 ## Run
 
 ### 0. `brew install sbt && npm install elm -g`
