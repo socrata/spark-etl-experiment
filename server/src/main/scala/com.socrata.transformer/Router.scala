@@ -9,14 +9,16 @@ import com.socrata.http.server.util.handlers.{LoggingOptions, NewLoggingHandler}
 
 import org.slf4j.LoggerFactory
 
-case class Router(versionService: HttpService) {
+case class Router(versionService: HttpService, queryService: HttpService, rddService: RDDService) {
 
   private val logger = LoggerFactory.getLogger(getClass)
   private val logWrapper =
     NewLoggingHandler(LoggingOptions(logger, Set("X-Socrata-Host", "X-Socrata-Resource", ReqIdHeader))) _
 
   val routes = Routes(
-    Route("/version", versionService)
+    Route("/version", versionService),
+    Route("/query", queryService),
+    Route("/rdd", rddService)
   )
 
   def notFound(req: HttpRequest): HttpResponse = {

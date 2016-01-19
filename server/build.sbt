@@ -1,6 +1,6 @@
 name := "transformer"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.10.5"
 
 libraryDependencies ++= Seq(
   "com.socrata"               %% "socrata-http-jetty"      % "3.4.1" excludeAll(
@@ -13,7 +13,9 @@ libraryDependencies ++= Seq(
     ExclusionRule(organization = "com.socrata", name = "socrata-http-client"),
     ExclusionRule(organization = "com.socrata", name = "socrata-http-jetty")),
   "ch.qos.logback"             % "logback-classic"         % "1.1.3",
-  "org.apache.curator"         % "curator-x-discovery"     % "2.8.0"
+  "org.apache.curator"         % "curator-x-discovery"     % "2.8.0",
+  "org.apache.spark"          %% "spark-sql"               % "1.6.0",
+  "com.databricks"            %% "spark-csv"               % "1.3.0"
 )
 
 // Test dependencies
@@ -32,3 +34,11 @@ enablePlugins(sbtbuildinfo.BuildInfoPlugin)
 
 // Setup revolver.
 Revolver.settings
+
+
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", "MANIFEST.MF", xs @ _*) =>
+    MergeStrategy.discard
+  case _ =>
+    MergeStrategy.first
+}
