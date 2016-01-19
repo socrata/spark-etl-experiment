@@ -8,7 +8,7 @@ At the moment it isn't very useful: shows a column mapping (hardcoded to Chicago
 
 ### 0. `brew install sbt && npm install elm -g`
 
-### 1. Get Spark JobServer up & running
+### 1. Get [`spark-jobserver/spark-jobserver`](https://github.com/spark-jobserver/spark-jobserver/releases) up & running
 
 1. Download it as a zip (From the [releases page](https://github.com/spark-jobserver/spark-jobserver/releases); I used 0.6.1)
 2. cd into it
