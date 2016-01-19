@@ -107,7 +107,7 @@ mappingToSql tableName mapping =
         |> List.map (\(name, source) -> columnSourceToSql source ++ " as `" ++ name ++ "`")
         |> String.join ", "
   in
-    "SELECT " ++ columnSources ++ " FROM " ++ tableName
+    "SELECT " ++ columnSources ++ " FROM " ++ tableName ++ " limit 20"
 
 
 mappingToInvalidCounterSql : TableName -> SchemaMapping -> SQL
@@ -180,7 +180,7 @@ allStrings names =
 allStringMapping : List ColumnName -> SchemaMapping
 allStringMapping names =
   names
-    |> List.map (\name -> Debug.log "allStringMapping" (name, SourceColumn name))
+    |> List.map (\name -> (name, SourceColumn name))
 
 
 sqlOrErrors : TableName -> List ColumnName -> SchemaMapping -> Result (List Error) { results : SQL, invalidCounters : SQL }
@@ -395,4 +395,3 @@ columnType source =
 
     Constant _ ->
       SoqlText
-

@@ -12,7 +12,15 @@ object QueryApplication extends SparkSqlJob {
       .option("inferSchema", "true")
       .load(jobConfig.getString("path"))
     df.registerTempTable(jobConfig.getString("tablename"))
-    sc.sql(jobConfig.getString("query")).collect()
+    val result = sc.sql(jobConfig.getString("query"))
+    val columns = result.columns
+    val rows = result.collect()
+    Map(
+      "names" -> columns,
+      "values" -> rows.map(_.toSeq.map({ thing => // this is bad
+        if (thing == null) "null" else thing.toString
+      }))
+    )
   }
 
   def validate(sc: SQLContext, config: Config): SparkJobValidation =
