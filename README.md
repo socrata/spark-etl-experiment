@@ -6,7 +6,7 @@ At the moment it isn't very useful: shows a column mapping (hardcoded to Chicago
 
 ## Run
 
-### 0. `brew install sbt`, `npm install elm -g`
+### 0. `brew install sbt && npm install elm -g`
 
 ### 1. Get Spark JobServer up & running
 
@@ -40,4 +40,4 @@ Our JobServer is now ready to go, since it has our application and a context to 
 1. `elm reactor`
 2. Navigate to `localhost:8000/Main.elm`
 
-Screen should be there.
+The UI should be there.
