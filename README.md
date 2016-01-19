@@ -21,6 +21,7 @@ At the moment it isn't very useful: shows a column mapping (hardcoded to Chicago
 This is a Spark application which loads a CSV into a `SQLContext` and runs it.
 
 ```
+# back in this repo
 cd queryApplication
 sbt assembly
 ```
@@ -30,7 +31,7 @@ sbt assembly
 (while still in `queryApplication`)
 
 ```
-curl --data-binary @queryApplication/target/scala-2.10/csv-query-assembly-1.0.jar localhost:8090/jars/csv-query     
+curl --data-binary @target/scala-2.10/csv-query-assembly-1.0.jar localhost:8090/jars/csv-query     
 ```
 
 Our JobServer is now ready to go, since it has our application and a context to run it in.
