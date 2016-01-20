@@ -14,9 +14,10 @@ It consists of an Elm frontend for editing these "column mappings". When you upd
 
 1. Download it as a zip (From the [releases page](https://github.com/spark-jobserver/spark-jobserver/releases); I used 0.6.1)
 2. cd into it
-3. `sbt`
-4. type `job-server-extra/reStart` in the SBT prompt (can't do this from the command line apparently; your server will die instantly). If successful, it'll be on `localhost:8090` (provides a nice interface)
-5. Create a SQL context (will persist between jobs, saving time): `curl -d "" '127.0.0.1:8090/contexts/sql-context?context-factory=spark.jobserver.context.SQLContextFactory'`
+3. In `project/Build.scala` line 66, change `compile->compile; test->test` to `compile->compile`. I was not able to build the server without this.
+4. `sbt`
+5. type `job-server-extra/reStart` in the SBT prompt (can't do this from the command line apparently; your server will die instantly). If successful, it'll be on `localhost:8090` (provides a nice interface)
+6. Create a SQL context (will persist between jobs, saving time): `curl -d "" '127.0.0.1:8090/contexts/sql-context?context-factory=spark.jobserver.context.SQLContextFactory'`
 
 ### 2. Build the CSV Query Application
 
