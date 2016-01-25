@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# request to run ad-hoc jobs based on existing uploaded jar
+curl -d @request-crimes.json "localhost:8090/jobs?appName=csv-query-22&classPath=QueryApplication"

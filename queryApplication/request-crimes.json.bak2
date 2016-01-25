@@ -1,0 +1,7 @@
+{
+  "query": "SELECT `CASE#` as `CASE#` FROM crimes",
+  "schema": "ID,CASE#",
+  "tablename": "crimes",
+  "bucket": "socrata-publishing-test-files",
+  "prefix": "crimes/"
+}
