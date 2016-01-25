@@ -93,7 +93,7 @@ view addr model =
             ]
         ]
         [ sqlOrErrors
-            "crimes"
+            model.tableName
             model.sourceColumns
             model.mapping
           |> toString
@@ -175,7 +175,7 @@ app =
       { sourceColumns = Examples.sourceColumns
       , mapping = allStringMapping Examples.sourceColumns
       , path = "/crimes.csv"
-      , tableName = "crimes"
+      , tableName = "crimes2"
       , tableResult = Nothing
       }
   in

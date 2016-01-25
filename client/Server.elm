@@ -23,7 +23,7 @@ runQuery {path, tableName, query} =
   in
     Http.post
       queryResult
-      "http://localhost:8090/jobs?appName=csv-query&sync=true&context=sql-context-7&classPath=QueryApplication"
+      "http://localhost:8090/jobs?appName=csv-query&sync=true&context=sql-context-8&classPath=QueryApplication"
       body
 
 

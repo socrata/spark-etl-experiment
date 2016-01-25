@@ -2,8 +2,7 @@ import com.typesafe.config.Config
 import org.apache.spark.sql.SQLContext
 import spark.jobserver.{SparkJobInvalid, SparkJobValid, SparkJobValidation, SparkSqlJob}
 
-object QueryApplication extends SparkSqlJob {
-
+object LoadApplication extends SparkSqlJob {
   def runJob(sc: SQLContext, jobConfig: Config): Any = {
     val df = sc
       .read
@@ -12,6 +11,18 @@ object QueryApplication extends SparkSqlJob {
       .option("inferSchema", "true")
       .load(jobConfig.getString("path"))
     df.registerTempTable(jobConfig.getString("tablename"))
+  }
+
+  def validate(sc: SQLContext, config: Config): SparkJobValidation =
+    if(config.hasPath("path") && config.hasPath("tablename"))
+      SparkJobValid
+    else
+      SparkJobInvalid("needs keys 'path' and 'tablename'")
+}
+
+object QueryApplication extends SparkSqlJob {
+
+  def runJob(sc: SQLContext, jobConfig: Config): Any = {
     val result = sc.sql(jobConfig.getString("query"))
     val columns = result.columns
     val rows = result.collect()
@@ -24,9 +35,9 @@ object QueryApplication extends SparkSqlJob {
   }
 
   def validate(sc: SQLContext, config: Config): SparkJobValidation =
-    if(config.hasPath("query") && config.hasPath("tablename") && config.hasPath("path"))
+    if(config.hasPath("query"))
       SparkJobValid
     else
-      SparkJobInvalid("needs keys query, tablename, and path")
+      SparkJobInvalid("needs key 'query'")
 
 }
