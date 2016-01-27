@@ -3,10 +3,10 @@ module Examples where
 import Model exposing (..)
 
 sourceColumns =
-  [ "CASE#", "DATE  OF OCCURRENCE", "BLOCK", " IUCR", " PRIMARY DESCRIPTION"
-  , " SECONDARY DESCRIPTION", " LOCATION DESCRIPTION", "ARREST", "DOMESTIC"
-  , "BEAT", "WARD", "FBI CD", "X COORDINATE", "Y COORDINATE"
-  , "LATITUDE", "LONGITUDE", "LOCATION"
+  [ "ID", "Case Number", "Date", "Block", "IUCR", "Primary Type", "Description"
+  , "Location Description", "Arrest", "Domestic", "Beat", "District", "Ward"
+  , "Community Area", "FBI Code", "X Coordinate", "Y Coordinate", "Year"
+  , "Updated On", "Latitude", "Longitude", "Location"
   ]
 
 ex1 =

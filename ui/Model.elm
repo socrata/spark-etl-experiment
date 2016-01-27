@@ -5,6 +5,12 @@ import String
 import Set exposing (Set)
 
 
+type alias TypedTable =
+  { fieldNames : List ColumnName
+  , values : List (List String)
+  }
+
+
 type SoqlType
   = SoqlCheckbox
   | SoqlDouble
@@ -171,26 +177,19 @@ columnSourceToSql source =
       toString str -- puts quotes around... need to test...
 
 
-allStrings : List ColumnName -> Schema
-allStrings names =
-  names
-    |> List.map (\name -> (name, SoqlText))
 
-
-allStringMapping : List ColumnName -> SchemaMapping
-allStringMapping names =
-  names
+-- should be able to pass in initial guess
+initialMapping : TypedTable -> SchemaMapping
+initialMapping table =
+  table.fieldNames
     |> List.map (\name -> (name, SourceColumn name))
 
 
-sqlOrErrors : TableName -> List ColumnName -> SchemaMapping -> Result (List Error) { results : SQL, invalidCounters : SQL }
+sqlOrErrors : TableName -> List ColumnName -> SchemaMapping -> Result (List Error) SQL
 sqlOrErrors tableName sourceColumns mapping =
   case findErrors sourceColumns mapping of
     [] ->
-      Ok
-        { results = mappingToSql tableName mapping
-        , invalidCounters = mappingToInvalidCounterSql tableName mapping
-        }
+      Ok <| mappingToSql tableName mapping
 
     errs ->
       Err errs

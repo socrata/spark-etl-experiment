@@ -1,25 +1,21 @@
-import com.typesafe.config.Config
-
 import java.io.InputStream
-import scala.io.Source
-import org.apache.spark._
-import org.apache.spark.SparkContext._
-import org.apache.spark.sql.SQLContext
-import spark.jobserver.{SparkJobInvalid, SparkJobValid, SparkJobValidation, SparkJob}
 
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.types.{StructType,StructField,StringType}
-
+import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
 import com.amazonaws.services.s3._
 import com.amazonaws.services.s3.model._
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider
+import com.typesafe.config.Config
+import org.apache.spark._
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext}
+import spark.jobserver.{SparkJob, SparkJobInvalid, SparkJobValid, SparkJobValidation}
 
 import scala.collection.JavaConversions._
+import scala.collection.immutable
 import scala.collection.mutable._
+import scala.io.Source
 
 object QueryApplication extends SparkJob {
-  def s3 = new AmazonS3Client(new EnvironmentVariableCredentialsProvider())
+  def s3 = new AmazonS3Client(new ClasspathPropertiesFileCredentialsProvider())
 
   def listKeysInBucket(bucket: String, prefix: String): ObjectListing = {
     val request = new ListObjectsRequest()
@@ -30,9 +26,16 @@ object QueryApplication extends SparkJob {
   }
 
   def runJob(sc: SparkContext, jobConfig: Config): Any = {
-    val schemaString = jobConfig.getString("schema")
-    val bucket = jobConfig.getString("bucket")
-    val prefix = jobConfig.getString("prefix")
+    if (jobConfig.hasPath("s3source"))
+      s3Job(sc, jobConfig)
+    else
+      localJob(new SQLContext(sc), jobConfig)
+  }
+
+  def s3Job(sc: SparkContext, jobConfig: Config): Any = {
+    val schemaString = jobConfig.getString("s3source.schema")
+    val bucket = jobConfig.getString("s3source.bucket")
+    val prefix = jobConfig.getString("s3source.prefix")
     val keys = listKeysInBucket(bucket, prefix)
 
     val rdd = sc.parallelize(keys.getObjectSummaries.map(_.getKey).toList)
@@ -56,7 +59,7 @@ object QueryApplication extends SparkJob {
                    rPrime
                  })
                  .map(Row.fromSeq(_)) // --> creating the row with this method _appears_ to create rows correctly but leads to index out of bounds errors on the collect step
-                 //.map(r => Row(r(0), r(1))) --> creating the row using this method leads to success but inflexible w/r to schema length
+//                 .map(r => Row(r(0), r(1))) --> creating the row using this method leads to success but inflexible w/r to schema length
     row.foreach(r => {
       if (r.length < 22) {
         println(r)
@@ -66,19 +69,40 @@ object QueryApplication extends SparkJob {
     val df = sqc.createDataFrame(row, schema)
     df.registerTempTable(jobConfig.getString("tablename"))
     val result = sqc.sql(jobConfig.getString("query"))
-    val columns = result.columns
-    val rows = result.collect()
-    Map(
+    resultsToJson(result)
+  }
+
+  def localJob(sqlContext: SQLContext, jobConfig: Config): Any = {
+    val df = sqlContext.read
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .option("inferSchema", "false")
+      .load(jobConfig.getString("localPath"))
+
+    df.registerTempTable(jobConfig.getString("tablename"))
+    val results = sqlContext.sql(jobConfig.getString("query"))
+    sqlContext.dropTempTable(jobConfig.getString("tablename"))
+
+    resultsToJson(results)
+  }
+
+  def resultsToJson(df: DataFrame): Any = {
+    val columns = df.columns
+    immutable.Map(
       "names" -> columns,
-      "values" -> rows.map(_.toSeq.map({ thing => // this is bad
+      "values" -> df.collect().map(_.toSeq.map({ thing => // this is bad
         if (thing == null) "null" else thing.toString
        }))
     )
   }
 
-  def validate(sc: SparkContext, config: Config): SparkJobValidation =
-    if(config.hasPath("schema") && config.hasPath("query") && config.hasPath("tablename") && config.hasPath("bucket") && config.hasPath("prefix"))
+  def validate(sc: SparkContext, config: Config): SparkJobValidation = {
+    val hasS3Source = config.hasPath("s3source.bucket") && config.hasPath("c3source.prefix") && config.hasPath("schema")
+    val hasLocalSource = config.hasPath("localPath")
+    if (config.hasPath("query") && config.hasPath("tablename")
+          && (hasLocalSource || hasS3Source))
       SparkJobValid
     else
-      SparkJobInvalid("needs query, tablename, schema, bucket and prefix")
+      SparkJobInvalid("needs query, tablename, and either s3source.[bucket, prefix, schema] or localPath")
+  }
 }
