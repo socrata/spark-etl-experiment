@@ -98,6 +98,7 @@ view addr model =
             []
             [ PrimitiveEditors.stringEditor
                 (Signal.forwardTo addr actionWrapper)
+                50
                 currentValue
             ]
         ]
@@ -109,7 +110,7 @@ view addr model =
           []
           [ configField "jobServerUrl" UpdateJobserverUrl model.jobServerUrl
           , configField "tableName" UpdateTableName model.tableName
-          , configField "jobServerContext" UpdateJobServerContext model.jobServerContext
+          --, configField "jobServerContext" UpdateJobServerContext model.jobServerContext
           ]
       , text "Source: "
       , Tabs.tabs
@@ -130,6 +131,7 @@ view addr model =
               []
               [ PrimitiveEditors.stringEditor
                   (Signal.forwardTo addr UpdateLocalSource)
+                  50
                   path
               ]
       ]

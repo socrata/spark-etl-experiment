@@ -6,12 +6,12 @@ import Html.Events exposing (..)
 import Json.Decode as JsDec
 
 
-stringEditor : Signal.Address String -> String -> Html
-stringEditor addr currentValue =
+stringEditor : Signal.Address String -> Int -> String -> Html
+stringEditor addr editorSize currentValue =
   input
     [ type' "text"
     , on "input" (JsDec.at ["target", "value"] JsDec.string) (Signal.message addr)
     , value currentValue
-    , size 50
+    , size editorSize
     ]
     []

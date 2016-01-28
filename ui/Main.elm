@@ -16,6 +16,7 @@ import Examples
 import Server
 import Config exposing (Config)
 import Utils
+import PrimitiveEditors
 
 
 type Action
@@ -23,6 +24,7 @@ type Action
   | QueryResult (Result Server.QueryError TypedTable)
   | ConfigAction Config.Action
   | ManualRun
+  | UpdateColumnName Int ColumnName
 
 
 type Model
@@ -60,8 +62,14 @@ view addr model =
             ([ tr
                 []
                 (attrs.mapping
-                  |> List.map (\(name, _) ->
-                        th [] [ text name ]
+                  |> List.indexedMap (\idx (name, _) ->
+                        th
+                          []
+                          [ PrimitiveEditors.stringEditor
+                              (Signal.forwardTo addr (UpdateColumnName idx))
+                              23
+                              name
+                          ]
                       )
                 )
             , tr
@@ -110,8 +118,25 @@ dataRows table =
     |> List.map (\row ->
       tr
         []
-        (row |> List.map (\cell -> td [] [text cell]))
+        (row |> List.map (\cellResult -> td [] [viewCellResult cellResult]))
     )
+
+
+viewCellResult : CellResult -> Html
+viewCellResult result =
+  case result of
+    NullInData ->
+      span
+        [ style [("font-style", "italic")] ]
+        [ text "null" ]
+
+    ParseError original ->
+      span
+        [ style [("background-color", "pink")] ]
+        [ text original ]
+
+    ParsedValue parsed ->
+      text parsed
 
 
 typeSelector : Signal.Address SoqlType -> SoqlType -> Html
@@ -184,7 +209,7 @@ update action model =
             )
 
         QueryResult result ->
-          ( MainState { attrs | tableResult = result }
+          ( MainState { attrs | tableResult = result, loading = False }
           , Effects.none
           )
 
@@ -194,14 +219,23 @@ update action model =
           )
 
         ManualRun ->
-          ( MainState attrs
+          ( MainState { attrs | loading = True }
           , Effects.task (getTable attrs.config attrs.mapping)
           )
+
+        UpdateColumnName mappingIdx name ->
+          let
+            newMapping =
+              attrs.mapping |> updateColumnName mappingIdx name
+          in
+            ( MainState { attrs | mapping = newMapping }
+            , Effects.none
+            )
 
 
 getTable : Config -> SchemaMapping -> Task Effects.Never Action
 getTable config mapping =
-  Server.runQuery config (mappingToSql config.tableName mapping)
+  Server.runQuery config (mappingToSql config.tableName mapping) Server.cellResult
   |> Task.toResult
   |> Task.map QueryResult
 

@@ -7,8 +7,14 @@ import Set exposing (Set)
 
 type alias TypedTable =
   { fieldNames : List ColumnName
-  , values : List (List String)
+  , values : List (List CellResult)
   }
+
+
+type CellResult
+  = NullInData
+  | ParseError String
+  | ParsedValue String
 
 
 type SoqlType
@@ -143,28 +149,28 @@ columnSourceToSql source =
           "unix_timestamp(" ++ columnSourceToSql source ++ ", 'yyyy/MM/dd HH:mm:ss a')"
 
         SoqlCheckbox ->
-          "TODO_parse_SoqlCheckbox(" ++ columnSourceToSql source ++ ")"
+          "parseSoqlCheckbox(" ++ columnSourceToSql source ++ ")"
 
         SoqlMoney ->
-          "TODO_parse_SoqlMoney(" ++ columnSourceToSql source ++ ")"
+          "TODO_parseSoqlMoney(" ++ columnSourceToSql source ++ ")"
 
         SoqlNumber ->
-          "TODO_parse_SoqlNumber(" ++ columnSourceToSql source ++ ")"
+          "parseSoqlNumber(" ++ columnSourceToSql source ++ ")"
 
         SoqlText ->
-          columnSourceToSql source
+          "parseSoqlText(" ++ columnSourceToSql source ++ ")"
 
         SoqlLocation ->
-          "TODO_parse_SoqlLocation(" ++ columnSourceToSql source ++ ")"
+          "TODO_parseSoqlLocation(" ++ columnSourceToSql source ++ ")"
 
         SoqlPoint ->
-          "TODO_parse_SoqlPoint(" ++ columnSourceToSql source ++ ")"
+          "TODO_parseSoqlPoint(" ++ columnSourceToSql source ++ ")"
 
         SoqlPolygon ->
-          "TODO_parse_SoqlPolygon(" ++ columnSourceToSql source ++ ")"
+          "TODO_parseSoqlPolygon(" ++ columnSourceToSql source ++ ")"
 
         SoqlLine ->
-          "TODO_parse_SoqlLine(" ++ columnSourceToSql source ++ ")"
+          "TODO_parseSoqlLine(" ++ columnSourceToSql source ++ ")"
 
     ExtractWithRegex regex index source ->
       -- escaping is tricky...
@@ -182,7 +188,7 @@ columnSourceToSql source =
 initialMapping : TypedTable -> SchemaMapping
 initialMapping table =
   table.fieldNames
-    |> List.map (\name -> (name, SourceColumn name))
+    |> List.map (\name -> (name, ParseType SoqlText (SourceColumn name)))
 
 
 sqlOrErrors : TableName -> List ColumnName -> SchemaMapping -> Result (List Error) SQL
@@ -394,3 +400,16 @@ columnType source =
 
     Constant _ ->
       SoqlText
+
+
+updateColumnName : Int -> ColumnName -> SchemaMapping -> SchemaMapping
+updateColumnName idx newName mapping =
+  List.indexedMap
+    (\curIdx (name, source) ->
+      if curIdx == idx then
+        (newName, source)
+      else
+        (name, source)
+    )
+    mapping
+

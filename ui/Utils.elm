@@ -28,7 +28,7 @@ getMaybe msg maybe =
       x
 
     Nothing ->
-      Debug.crash "msg"
+      Debug.crash msg
 
 
 monospaceDiv : a -> Html

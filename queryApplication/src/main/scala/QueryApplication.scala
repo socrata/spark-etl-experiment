@@ -45,6 +45,8 @@ object QueryApplication extends SparkJob {
                 }
 
     val sqc = new SQLContext(sc)
+    // TODO: do this while making the persistent context...
+    SoqlTypeParsers.registerUdfs(sqc)
 
     val schemaParts = schemaString.split(",")
     val schema = StructType(
@@ -82,17 +84,23 @@ object QueryApplication extends SparkJob {
     df.registerTempTable(jobConfig.getString("tablename"))
     val results = sqlContext.sql(jobConfig.getString("query"))
     sqlContext.dropTempTable(jobConfig.getString("tablename"))
+    // TODO: do this while making the persistent context...
+    SoqlTypeParsers.registerUdfs(sqlContext)
 
     resultsToJson(results)
   }
 
   def resultsToJson(df: DataFrame): Any = {
-    val columns = df.columns
+    val dataColumns = df.columns.flatMap((colName) =>
+      immutable.Seq(
+        df(s"`$colName`.originalValue").as(s"${colName}_orig"),
+        df(s"`$colName`.parsedValue").as(s"${colName}_parsed")
+      )
+    )
+    val exploded = df.select(dataColumns : _*)
     immutable.Map(
-      "names" -> columns,
-      "values" -> df.collect().map(_.toSeq.map({ thing => // this is bad
-        if (thing == null) "null" else thing.toString
-       }))
+      "names" -> exploded.columns,
+      "values" -> exploded.collect().map(_.toSeq)
     )
   }
 

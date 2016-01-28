@@ -28,6 +28,7 @@ view addr model =
         [ td [] [text "bucket"]
         , PrimitiveEditors.stringEditor
             (Signal.forwardTo addr UpdateBucket)
+            50
             model.bucket
         ]
     , tr
@@ -35,6 +36,7 @@ view addr model =
         [ td [] [text "chunkPrefix"]
         , PrimitiveEditors.stringEditor
             (Signal.forwardTo addr UpdateChunkPrefix)
+            50
             model.chunkPrefix
         ]
     ]
