@@ -38,7 +38,8 @@ The jobserver is now ready to receive queries. **NB** in production we'll use jo
 
 ### 4. Start Elm Frontend
 
-1. `elm reactor`
-2. Navigate to `localhost:8000/Main.elm`
+1. cd into `ui`
+2. `elm reactor`
+3. Navigate to `localhost:8000/Main.elm`
 
 The UI should be there.
