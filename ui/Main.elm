@@ -117,7 +117,7 @@ dataRows table =
     |> List.map (\row ->
       tr
         []
-        (row |> List.map (\cellResult -> td [] [viewCellResult cellResult]))
+        (row |> List.map (\cellResult -> viewCellResult cellResult))
     )
 
 
@@ -125,17 +125,17 @@ viewCellResult : CellResult -> Html
 viewCellResult result =
   case result of
     NullInData ->
-      span
+      td
         [ style [("font-style", "italic")] ]
         [ text "null" ]
 
     ParseError original ->
-      span
+      td
         [ style [("background-color", "pink")] ]
         [ text original ]
 
     ParsedValue parsed ->
-      text parsed
+      td [] [text parsed]
 
 
 typeSelector : Signal.Address SoqlType -> SoqlType -> Html
@@ -208,7 +208,7 @@ update action model =
             )
 
         QueryResult result ->
-          ( MainState { attrs | tableResult = result, loading = False }
+          ( MainState { attrs | tableResult = Debug.log "res" result, loading = False }
           , Effects.none
           )
 
@@ -238,7 +238,7 @@ getTable config mapping =
     config
     (mappingToSql config.tableName mapping)
     Server.QueryApplication
-    Server.cellResult
+    Server.withErrorsDecoder
   |> Task.toResult
   |> Task.map QueryResult
 

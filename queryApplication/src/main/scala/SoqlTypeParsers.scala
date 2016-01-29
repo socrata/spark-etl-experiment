@@ -5,17 +5,17 @@ import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 
 object SoqlTypeParsers {
 
-  case class MaybeError[A](originalValue: String, parsedValue: Option[A])
+  case class MaybeError(originalValue: String, parsedValue: Option[String])
 
   def parseText(input: String):Option[String] =
     Some(input)
 
-  def parseCheckbox(input: String):Option[Boolean] =
+  def parseCheckbox(input: String):Option[String] =
     input.toLowerCase match {
       case "0" | "f" | "false" | "n" | "no" | "off" =>
-        Some(false)
+        Some("false")
       case "1" | "t" | "true" | "y" | "yes" | "on" =>
-        Some(true)
+        Some("true")
       case _ =>
         None
     }
@@ -29,6 +29,7 @@ object SoqlTypeParsers {
         None
     }
 
+  // TODO format as arg
   def parseDateTime(input: String):Option[String] =
     try {
       val dt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(input)
@@ -38,7 +39,7 @@ object SoqlTypeParsers {
         None
     }
 
-  def handleDataNull1[A](f: String => Option[A])(input: String): Option[MaybeError[A]] =
+  def handleDataNull1(f: String => Option[String])(input: String): Option[MaybeError] =
     if(input == null)
       None
     else {
@@ -47,7 +48,7 @@ object SoqlTypeParsers {
     }
 
   // ...?
-  def handleDataNull2[A](f: (String, String) => Option[A])(input1: String, input2: String): Option[MaybeError[A]] =
+  def handleDataNull2(f: (String, String) => Option[String])(input1: String, input2: String): Option[MaybeError] =
     if(input1 == null || input2 == null)
       None
     else {

@@ -21,8 +21,8 @@ type Application
   | GetSchemaApplication
 
 
-runQuery : Config -> String -> Application -> Decoder CellResult -> Task QueryError TypedTable
-runQuery config query application cellDecoder =
+runQuery : Config -> String -> Application -> Decoder TypedTable -> Task QueryError TypedTable
+runQuery config query application tableDecoder =
   let
     basicFields =
       [ ("tablename", JsEnc.string config.tableName)
@@ -55,7 +55,7 @@ runQuery config query application cellDecoder =
         200 ->
           case response.value of
             Http.Text str ->
-              case JsDec.decodeString (queryResult cellDecoder) str of
+              case JsDec.decodeString (apiResult tableDecoder) str of
                 Ok table ->
                   Task.succeed table
 
@@ -93,39 +93,68 @@ runQuery config query application cellDecoder =
     `Task.andThen` parseResponse
 
 
-queryResult : Decoder CellResult -> JsDec.Decoder TypedTable
-queryResult cellDecoder =
+-- TODO: account for job errors (which are 200s)
+apiResult : JsDec.Decoder TypedTable -> JsDec.Decoder TypedTable
+apiResult tableItselfDecoder =
+  object1 identity ("result" := tableItselfDecoder)
+
+
+-- TODO: schema guesses will come through here...
+initialQueryDecoder : JsDec.Decoder TypedTable
+initialQueryDecoder =
   let
-    tableItself =
-      object2
-        (\names values -> { fieldNames = names, values = values })
-        ("names" := list string)
-        ("values" := list row)
-
-    row =
-      customDecoder (list (maybe string)) joinPairs
-
-    joinPairs : List (Maybe String) -> Result String (List CellResult)
-    joinPairs maybeStrings =
-      groupPairs maybeStrings
-        |> Utils.getMaybe "odd row length"
-        |> List.map
-            (\(maybeOriginal, maybeParsed) ->
-              case maybeOriginal of
-                Nothing ->
-                  NullInData
-
-                Just original ->
-                  case maybeParsed of
-                    Just parsed ->
-                      ParsedValue parsed
-
-                    Nothing ->
-                      ParseError original
-            )
-        |> Ok
+    cell =
+      oneOf
+        [ null NullInData
+        , string |> JsDec.map ParsedValue
+        ]
   in
-    object1 identity ("result" := tableItself)
+    object2
+      (\names values ->
+        { fieldNames = names
+        , values = values
+        }
+      )
+      ("names" := list string)
+      ("values" := list (list cell))
+
+
+withErrorsDecoder : JsDec.Decoder TypedTable
+withErrorsDecoder =
+  let
+    row =
+      list (maybe string)
+        `customDecoder` joinPairs
+  in
+    object2
+      (\names values ->
+        { fieldNames = names
+        , values = values
+        }
+      )
+      ("names" := list string)
+      ("values" := list row)
+
+
+joinPairs : List (Maybe String) -> Result String (List CellResult)
+joinPairs maybeStrings =
+  groupPairs maybeStrings
+    |> Utils.getMaybe "odd row length"
+    |> List.map
+        (\(maybeOriginal, maybeParsed) ->
+          case maybeOriginal of
+            Nothing ->
+              NullInData
+
+            Just original ->
+              case maybeParsed of
+                Just parsed ->
+                  ParsedValue parsed
+
+                Nothing ->
+                  ParseError original
+        )
+    |> Ok
 
 
 {-| Nothing: odd list length -}
@@ -148,34 +177,10 @@ groupPairs list =
         Nothing
 
 
-cellResult : JsDec.Decoder CellResult
-cellResult =
-  oneOf
-    [ null NullInData
-    , customDecoder
-        (object2
-          (\original parsed ->
-            { original = original
-            , parsed = parsed
-            })
-          ("originalValue" := string)
-          ("parsedValue" := maybe string)
-        )
-        (\{original, parsed} ->
-          case parsed of
-            Just parsedVal ->
-              Ok (ParsedValue parsedVal)
-
-            Nothing ->
-              Ok (ParseError original)
-        )
-    ]
-
-
 initialQuery : Config -> Task QueryError TypedTable
 initialQuery config =
   runQuery
     config
     ("select * from " ++ config.tableName ++ " limit 20")
     GetSchemaApplication
-    (string |> map ParsedValue)
+    initialQueryDecoder
