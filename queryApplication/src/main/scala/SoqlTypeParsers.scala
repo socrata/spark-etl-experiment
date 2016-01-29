@@ -1,4 +1,5 @@
 import org.apache.spark.sql.SQLContext
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 
 // for reference: CsvTypeConverters.scala in DI2
 
@@ -28,7 +29,16 @@ object SoqlTypeParsers {
         None
     }
 
-  def handleDataNull[A](f: String => Option[A])(input: String): Option[MaybeError[A]] =
+  def parseDateTime(input: String):Option[String] =
+    try {
+      val dt = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(input)
+      Some(ISODateTimeFormat.dateTime().print(dt))
+    } catch {
+      case ex: IllegalArgumentException =>
+        None
+    }
+
+  def handleDataNull1[A](f: String => Option[A])(input: String): Option[MaybeError[A]] =
     if(input == null)
       None
     else {
@@ -36,10 +46,23 @@ object SoqlTypeParsers {
       Some(MaybeError(input, r))
     }
 
+  // ...?
+  def handleDataNull2[A](f: (String, String) => Option[A])(input1: String, input2: String): Option[MaybeError[A]] =
+    if(input1 == null || input2 == null)
+      None
+    else {
+      val r = f(input1, input2)
+      Some(MaybeError(input1, r))
+    }
+
   def registerUdfs(sqlContext: SQLContext):Unit = {
-    sqlContext.udf.register("parseSoqlText", handleDataNull(parseText) _)
-    sqlContext.udf.register("parseSoqlCheckbox", handleDataNull(parseCheckbox) _)
-    sqlContext.udf.register("parseSoqlNumber", handleDataNull(parseNumber) _)
+    sqlContext.udf.register("parseSoqlText", handleDataNull1(parseText) _)
+    sqlContext.udf.register("parseSoqlCheckbox", handleDataNull1(parseCheckbox) _)
+    sqlContext.udf.register("parseSoqlNumber", handleDataNull1(parseNumber) _)
+    // v^ not really sure what the difference is between these
+    sqlContext.udf.register("parseSoqlDouble", handleDataNull1(parseNumber) _)
+    val twoFun = handleDataNull1(parseDateTime) _
+    sqlContext.udf.register("parseSoqlTimestamp", twoFun)
   }
 
 }

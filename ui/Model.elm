@@ -142,11 +142,11 @@ columnSourceToSql source =
     ParseType colType source ->
       case colType of
         SoqlDouble ->
-          "cast(" ++ columnSourceToSql source ++ " as Double)"
+          "parseSoqlDouble(" ++ columnSourceToSql source ++ ")"
 
         SoqlFloatingTimestamp ->
           -- TODO: more date formats somehow?
-          "unix_timestamp(" ++ columnSourceToSql source ++ ", 'yyyy/MM/dd HH:mm:ss a')"
+          "parseSoqlTimestamp(" ++ columnSourceToSql source ++ ")"
 
         SoqlCheckbox ->
           "parseSoqlCheckbox(" ++ columnSourceToSql source ++ ")"

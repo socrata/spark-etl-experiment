@@ -100,7 +100,7 @@ object QueryApplication extends SparkJob {
     val exploded = df.select(dataColumns : _*)
     immutable.Map(
       "names" -> exploded.columns,
-      "values" -> exploded.collect().map(_.toSeq)
+      "values" -> exploded.map(_.toSeq).collect()
     )
   }
 

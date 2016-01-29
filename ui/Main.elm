@@ -12,7 +12,6 @@ import StartApp
 import Effects exposing (Effects)
 
 import Model exposing (..)
-import Examples
 import Server
 import Config exposing (Config)
 import Utils
@@ -235,7 +234,11 @@ update action model =
 
 getTable : Config -> SchemaMapping -> Task Effects.Never Action
 getTable config mapping =
-  Server.runQuery config (mappingToSql config.tableName mapping) Server.cellResult
+  Server.runQuery
+    config
+    (mappingToSql config.tableName mapping)
+    Server.QueryApplication
+    Server.cellResult
   |> Task.toResult
   |> Task.map QueryResult
 

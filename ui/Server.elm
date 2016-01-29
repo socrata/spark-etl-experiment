@@ -16,8 +16,13 @@ type QueryError
   | ConnectionError Http.RawError
 
 
-runQuery : Config -> String -> Decoder CellResult -> Task QueryError TypedTable
-runQuery config query cellDecoder =
+type Application
+  = QueryApplication
+  | GetSchemaApplication
+
+
+runQuery : Config -> String -> Application -> Decoder CellResult -> Task QueryError TypedTable
+runQuery config query application cellDecoder =
   let
     basicFields =
       [ ("tablename", JsEnc.string config.tableName)
@@ -81,7 +86,7 @@ runQuery config query cellDecoder =
       { verb = "POST"
       , headers = []
       --, url = config.jobServerUrl ++ "/jobs?appName=csv-query&sync=true&context=" ++ config.jobServerContext ++ "&classPath=QueryApplication"
-      , url = config.jobServerUrl ++ "/jobs?appName=csv-query&sync=true&classPath=QueryApplication"
+      , url = config.jobServerUrl ++ "/jobs?appName=csv-query&sync=true&classPath=" ++ (toString application)
       , body = body
       }
     |> Task.mapError ConnectionError)
@@ -172,4 +177,5 @@ initialQuery config =
   runQuery
     config
     ("select * from " ++ config.tableName ++ " limit 20")
+    GetSchemaApplication
     (string |> map ParsedValue)

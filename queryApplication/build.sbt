@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(
   "spark.jobserver"  %% "job-server-api"    % "0.6.1" % "provided",
   "spark.jobserver"  %% "job-server-extras" % "0.6.1" % "provided",
   "com.amazonaws"    %  "aws-java-sdk-core" % "1.10.49",
-  "com.amazonaws"    %  "aws-java-sdk-s3"   % "1.10.49"
+  "com.amazonaws"    %  "aws-java-sdk-s3"   % "1.10.49",
+  "joda-time"        % "joda-time"          % "2.9.2"
 )
 
 resolvers += "Job Server Bintray" at "https://dl.bintray.com/spark-jobserver/maven"
