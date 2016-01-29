@@ -2,9 +2,7 @@
 
 An experiment in using Spark as a backend for an interactive ETL system.
 
-At the moment it isn't very useful: shows a column mapping (hardcoded to Chicago Crimes!). You can change data types, and cells will come back as "null" if it couldn't parse them.
-
-It consists of an Elm frontend for editing these "column mappings". When you update the mapping, it generates SQL that it sends back to Spark (via a `spark-jobserver` job), and displays the results.
+It consists of an Elm frontend for editing these "column mappings". When you update the mapping, it generates SQL that it sends back to Spark (via a `spark-jobserver` job), and displays the results. Currently it can only run queries on CSV files on your local filesystem.
 
 ## Run
 
@@ -17,7 +15,6 @@ It consists of an Elm frontend for editing these "column mappings". When you upd
 3. In `project/Build.scala` line 66, change `compile->compile; test->test` to `compile->compile`. I was not able to build the server without this.
 4. `sbt`
 5. type `job-server-extra/reStart` in the SBT prompt (can't do this from the command line apparently; your server will die instantly). If successful, it'll be on `localhost:8090` (provides a nice interface)
-6. Create a SQL context (will persist between jobs, saving time): `curl -d "" '127.0.0.1:8090/contexts/sql-context?context-factory=spark.jobserver.context.SQLContextFactory'`
 
 ### 2. Build the CSV Query Application
 
@@ -37,9 +34,7 @@ sbt assembly
 curl --data-binary @target/scala-2.10/csv-query-assembly-1.0.jar localhost:8090/jars/csv-query     
 ```
 
-Our JobServer is now ready to go, since it has our application and a context to run it in.
-
-*NB*: If you update the application jar and upload it, you'll have to restart the spark jobserver or create a new context (step 1.5) and update the Elm code (`Server.elm`, the `context` query param) to reference it. This is because jars seem to stick to contexts — after a context has used a jar once, it never pulls in updates (or something like that).
+The jobserver is now ready to receive queries. **NB** in production we'll use jobserver's persistent contexts to make this faster, since creating a context seems to have a few hundred ms of overhead. However, contexts are annoying for development because if you update a jar during the lifetime of a context, the context just keeps using the old version :P.
 
 ### 4. Start Elm Frontend
 
