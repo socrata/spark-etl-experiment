@@ -7,6 +7,7 @@ object SoqlTypeParsers {
 
   case class MaybeError(originalValue: String, parsedValue: Option[String])
 
+  // TODO: option for "" == null?
   def parseText(input: String):Option[String] =
     Some(input)
 

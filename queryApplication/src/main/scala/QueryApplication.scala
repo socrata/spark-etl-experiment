@@ -82,10 +82,10 @@ object QueryApplication extends SparkJob {
       .load(jobConfig.getString("localPath"))
 
     df.registerTempTable(jobConfig.getString("tablename"))
-    val results = sqlContext.sql(jobConfig.getString("query"))
-    sqlContext.dropTempTable(jobConfig.getString("tablename"))
     // TODO: do this while making the persistent context...
     SoqlTypeParsers.registerUdfs(sqlContext)
+    val results = sqlContext.sql(jobConfig.getString("query"))
+    sqlContext.dropTempTable(jobConfig.getString("tablename"))
 
     resultsToJson(results)
   }
